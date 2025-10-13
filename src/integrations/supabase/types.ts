@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      classifications: {
+        Row: {
+          classification_type: string
+          confidence_score: number
+          created_at: string | null
+          details: Json | null
+          id: string
+          image_url: string
+        }
+        Insert: {
+          classification_type: string
+          confidence_score: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          image_url: string
+        }
+        Update: {
+          classification_type?: string
+          confidence_score?: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          image_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

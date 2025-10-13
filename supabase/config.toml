@@ -1,1 +1,4 @@
 project_id = "gvschbjhasvcfxcrtrcv"
+
+[functions.classify-skin-lesion]
+verify_jwt = false

@@ -3,11 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ClassificationResult } from "./ClassificationResult";
 
 export const ImageUpload = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [classificationResult, setClassificationResult] = useState<any>(null);
   const { toast } = useToast();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -55,20 +58,43 @@ export const ImageUpload = () => {
     }
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!selectedImage) return;
+    
     setIsAnalyzing(true);
-    // Simulate analysis
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      toast({
-        title: "Analysis Complete",
-        description: "AI model integration pending. Connect to Lovable Cloud to enable real-time analysis.",
+    setClassificationResult(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('classify-skin-lesion', {
+        body: { imageBase64: selectedImage }
       });
-    }, 2000);
+
+      if (error) throw error;
+
+      if (data.success && data.result) {
+        setClassificationResult(data.result);
+        toast({
+          title: "Analysis Complete",
+          description: "Skin lesion has been classified successfully.",
+        });
+      } else {
+        throw new Error(data.error || 'Analysis failed');
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const clearImage = () => {
     setSelectedImage(null);
+    setClassificationResult(null);
   };
 
   return (
@@ -162,6 +188,12 @@ export const ImageUpload = () => {
               )}
             </CardContent>
           </Card>
+
+          {classificationResult && (
+            <div className="mt-6">
+              <ClassificationResult result={classificationResult} />
+            </div>
+          )}
 
           <Card className="mt-6 border-amber-500/20 bg-amber-500/5">
             <CardHeader>
